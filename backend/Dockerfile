@@ -32,11 +32,11 @@ RUN apk add --no-cache git ca-certificates curl wget
 
 WORKDIR /app
 
-# Install delve for debugging
-RUN go install github.com/go-delve/delve/cmd/dlv@latest
-
 COPY go.mod go.sum ./
 RUN go mod download
+
+# Install delve for debugging (optional, don't fail if it doesn't work)
+RUN go install github.com/go-delve/delve/cmd/dlv@latest || echo "Delve installation skipped"
 
 COPY . .
 
