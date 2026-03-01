@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
+import { AuthProvider } from "@/components/AuthProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Navbar } from "@/components/layout/Navbar";
@@ -28,7 +28,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <ClerkProvider>
+        <AuthProvider>
             <html lang="en" className="dark">
                 <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
                     <AnimatedBackground />
@@ -52,6 +52,6 @@ export default function RootLayout({
                     />
                 </body>
             </html>
-        </ClerkProvider>
+        </AuthProvider>
     );
 }
