@@ -1,0 +1,229 @@
+# =============================================================================
+# Docker Compose Override - Development Configuration
+# =============================================================================
+# This file automatically extends docker-compose.yml when running:
+#   docker-compose up
+#
+# Use this for development-specific overrides like:
+# - Volume mounts for hot reload
+# - Debug ports
+# - Development tools
+# - Environment-specific settings
+#
+# For production deployment, use:
+#   docker-compose -f docker-compose.yml up
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL - Development Overrides
+  # ---------------------------------------------------------------------------
+  postgres:
+    # Expose additional debugging ports if needed
+    ports:
+      - "5432:5432"
+    # Mount local SQL files for development
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - ./backend/migrations:/migrations:ro
+    # Development-friendly logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Allow more connections in development
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=6553kB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+
+  # ---------------------------------------------------------------------------
+  # Redis - Development Overrides
+  # ---------------------------------------------------------------------------
+  redis:
+    ports:
+      - "6379:6379"
+    # Less aggressive persistence for faster development
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --save 300 10
+      --save 60 10000
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --loglevel notice
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------------------------
+  # API (Go Backend) - Development Overrides
+  # ---------------------------------------------------------------------------
+  api:
+    # Use development target with hot reload capability
+    build:
+      target: development
+    # Mount source code for hot reload
+    volumes:
+      - ./backend:/app:cached
+      - go_mod_cache:/go/pkg/mod
+    # Expose debug port for Delve
+    ports:
+      - "8080:8080"
+      - "40000:40000"  # Delve debugger
+    environment:
+      # Override for development debugging
+      DEBUG: "true"
+      LOG_LEVEL: "debug"
+      # Air/live reload configuration
+      AIR_CONFIG: ".air.toml"
+    # Override command for hot reload (if using Air or similar)
+    # command: ["air", "-c", ".air.toml"]
+    # For now, use go run for simplicity
+    command: ["go", "run", "./cmd/server"]
+    # Development security - less strict
+    security_opt:
+      - "no-new-privileges:false"
+    # Resource limits for development
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+    # Health check with longer intervals for dev
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    stdin_open: true
+    tty: true
+
+  # ---------------------------------------------------------------------------
+  # Frontend (Next.js) - Development Overrides
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      target: development
+      args:
+        - NODE_ENV=development
+    # Mount source code for hot reload
+    volumes:
+      - ./frontend:/app:cached
+      - /app/node_modules  # Anonymous volume to preserve node_modules
+      - /app/.next         # Anonymous volume for build cache
+    ports:
+      - "3000:3000"
+      - "9230:9230"  # Node.js debugger
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true  # Enable polling for file changes (useful in Docker)
+      - CHOKIDAR_USEPOLLING=true  # Chokidar file watching
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_WEBPACK_POLLING=true
+    # Ensure hot reload works
+    stdin_open: true
+    tty: true
+    command: ["npm", "run", "dev"]
+    # Proxy API requests to backend service
+    # This is handled by Next.js rewrites in next.config.js
+    depends_on:
+      api:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # PDF Renderer - Development Overrides
+  # ---------------------------------------------------------------------------
+  pdf-renderer:
+    ports:
+      - "3001:3000"
+    # More verbose logging in development
+    environment:
+      - DEBUG=browserless:*
+      - ENABLE_DEBUGGER=true
+      - PREBOOT_CHROME=true
+      - KEEP_ALIVE=true
+    volumes:
+      - pdf_renderer_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+
+  # ---------------------------------------------------------------------------
+  # Development Tools (Optional)
+  # ---------------------------------------------------------------------------
+  # Uncomment to use additional development tools
+  
+  # MailHog - Email testing
+  # mailhog:
+  #   image: mailhog/mailhog:latest
+  #   container_name: redteam-mailhog
+  #   ports:
+  #     - "1025:1025"  # SMTP
+  #     - "8025:8025"  # Web UI
+  #   networks:
+  #     - redteam-network
+  
+  # Adminer - Database management UI
+  # adminer:
+  #   image: adminer:latest
+  #   container_name: redteam-adminer
+  #   ports:
+  #     - "8081:8080"
+  #   environment:
+  #     ADMINER_DEFAULT_SERVER: postgres
+  #   networks:
+  #     - redteam-network
+  #   depends_on:
+  #     - postgres
+  
+  # Redis Commander - Redis management UI
+  # redis-commander:
+  #   image: rediscommander/redis-commander:latest
+  #   container_name: redteam-redis-commander
+  #   environment:
+  #     - REDIS_HOSTS=local:redis:6379
+  #   ports:
+  #     - "8082:8081"
+  #   networks:
+  #     - redteam-network
+  #   depends_on:
+  #     - redis
+
+# Additional volumes for development
+volumes:
+  go_mod_cache:
+    driver: local
+  pdf_renderer_data:
+    driver: local
+
+# Network configuration (inherits from main compose file)
+# networks:
+#   redteam-network:
+#     driver: bridge
