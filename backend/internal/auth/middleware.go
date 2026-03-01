@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -68,6 +69,21 @@ func (m *Middleware) RequireAuth() func(http.Handler) http.Handler {
 			// Handle OPTIONS requests for CORS
 			if r.Method == "OPTIONS" {
 				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Development mode bypass - check for DEV_MODE env var
+			if os.Getenv("DEV_MODE") == "true" {
+				// Create a mock user for development
+				devUser := &User{
+					ID:        uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					Email:     "dev@localhost",
+					Tier:      TierEnterprise,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+				ctx := context.WithValue(r.Context(), ContextKeyUser, devUser)
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 
@@ -229,6 +245,21 @@ func (m *Middleware) RequireAPIKey() func(http.Handler) http.Handler {
 			// Handle OPTIONS requests for CORS
 			if r.Method == "OPTIONS" {
 				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Development mode bypass - check for DEV_MODE env var
+			if os.Getenv("DEV_MODE") == "true" {
+				// Create a mock user for development
+				devUser := &User{
+					ID:        uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					Email:     "dev@localhost",
+					Tier:      TierEnterprise,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				}
+				ctx := context.WithValue(r.Context(), ContextKeyUser, devUser)
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 

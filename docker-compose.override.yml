@@ -71,6 +71,7 @@ services:
       # Override for development debugging
       DEBUG: "true"
       LOG_LEVEL: "debug"
+      DEV_MODE: "true"
       # Air/live reload configuration
       AIR_CONFIG: ".air.toml"
     # Override command for hot reload (if using Air or similar)
