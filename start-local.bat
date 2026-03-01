@@ -28,45 +28,44 @@ echo.
 
 :: Backend Setup
 echo ==========================================
-echo [1/4] Setting up Backend...
+echo [1/3] Setting up Backend...
 echo ==========================================
 cd backend
 
 :: Create .env file for local development
-if not exist .env (
-    echo Creating .env file for local development...
-    (
-        echo # Database Configuration
-        echo DATABASE_URL=postgres://postgres:postgres@localhost:5432/redteam?sslmode=disable
-        echo DATABASE_HOST=localhost
-        echo DATABASE_PORT=5432
-        echo DATABASE_USER=postgres
-        echo DATABASE_PASSWORD=postgres
-        echo DATABASE_NAME=redteam
-        echo DATABASE_SSL_MODE=disable
-        echo.
-        echo # Redis Configuration
-        echo REDIS_URL=localhost:6379
-        echo REDIS_HOST=localhost
-        echo REDIS_PORT=6379
-        echo REDIS_PASSWORD=
-        echo REDIS_DB=0
-        echo.
-        echo # Server Configuration
-        echo PORT=8080
-        echo HOST=0.0.0.0
-        echo ENV=development
-        echo DEBUG=true
-        echo LOG_LEVEL=debug
-        echo.
-        echo # Rate Limiting
-        echo RATE_LIMIT_REQUESTS=100
-        echo RATE_LIMIT_WINDOW=60
-    ) > .env
-    echo [OK] .env file created
-) else (
-    echo [OK] .env file already exists
-)
+if exist .env goto envExists
+echo Creating .env file for local development...
+echo # Database Configuration > .env
+echo DATABASE_URL=postgres://postgres:postgres@localhost:5432/redteam?sslmode=disable >> .env
+echo DATABASE_HOST=localhost >> .env
+echo DATABASE_PORT=5432 >> .env
+echo DATABASE_USER=postgres >> .env
+echo DATABASE_PASSWORD=postgres >> .env
+echo DATABASE_NAME=redteam >> .env
+echo DATABASE_SSL_MODE=disable >> .env
+echo. >> .env
+echo # Redis Configuration >> .env
+echo REDIS_URL=localhost:6379 >> .env
+echo REDIS_HOST=localhost >> .env
+echo REDIS_PORT=6379 >> .env
+echo REDIS_PASSWORD= >> .env
+echo REDIS_DB=0 >> .env
+echo. >> .env
+echo # Server Configuration >> .env
+echo PORT=8080 >> .env
+echo HOST=0.0.0.0 >> .env
+echo ENV=development >> .env
+echo DEBUG=true >> .env
+echo LOG_LEVEL=debug >> .env
+echo. >> .env
+echo # Rate Limiting >> .env
+echo RATE_LIMIT_REQUESTS=100 >> .env
+echo RATE_LIMIT_WINDOW=60 >> .env
+echo [OK] .env file created
+goto envDone
+:envExists
+echo [OK] .env file already exists
+:envDone
 
 :: Download Go dependencies
 echo.
@@ -84,51 +83,51 @@ cd ..
 :: Frontend Setup
 echo.
 echo ==========================================
-echo [2/4] Setting up Frontend...
+echo [2/3] Setting up Frontend...
 echo ==========================================
 cd frontend
 
 :: Create .env.local file
-if not exist .env.local (
-    echo Creating .env.local file...
-    copy .env.local.example .env.local >nul 2>&1
-    echo [OK] .env.local file created
-) else (
-    echo [OK] .env.local file already exists
-)
+if exist .env.local goto envLocalExists
+echo Creating .env.local file...
+copy .env.local.example .env.local >nul 2>&1
+echo [OK] .env.local file created
+goto envLocalDone
+:envLocalExists
+echo [OK] .env.local file already exists
+:envLocalDone
 
 :: Install npm dependencies
-if not exist node_modules (
-    echo.
-    echo Installing npm dependencies (this may take a few minutes)...
-    npm install
-    if %ERRORLEVEL% neq 0 (
-        echo [ERROR] Failed to install npm dependencies
-        pause
-        exit /b 1
-    )
-    echo [OK] npm dependencies installed
-) else (
-    echo [OK] npm dependencies already installed
+if exist node_modules goto nodeModulesExist
+echo.
+echo Installing npm dependencies ^(this may take a few minutes^)...
+npm install
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] Failed to install npm dependencies
+    pause
+    exit /b 1
 )
+echo [OK] npm dependencies installed
+goto nodeModulesDone
+:nodeModulesExist
+echo [OK] npm dependencies already installed
+:nodeModulesDone
 
 cd ..
 
 :: Start Backend
 echo.
 echo ==========================================
-echo [3/4] Starting Backend Server...
+echo [3/3] Starting Servers...
 echo ==========================================
-start "Red Team Scanner - Backend" cmd /k "cd backend && echo Starting Backend on http://localhost:8080 && go run cmd/server/main.go"
+echo Starting Backend on http://localhost:8080
+start "Red Team Scanner - Backend" cmd /k "cd backend && go run cmd/server/main.go"
 
 :: Wait a moment for backend to start
 timeout /t 3 /nobreak >nul
 
 :: Start Frontend
-echo.
-echo ==========================================
-echo [4/4] Starting Frontend Server...
-echo ==========================================
+echo Starting Frontend on http://localhost:3000
 start "Red Team Scanner - Frontend" cmd /k "cd frontend && npm run dev"
 
 echo.
@@ -139,7 +138,7 @@ echo.
 echo Frontend: http://localhost:3000
 echo Backend:  http://localhost:8080
 echo.
-echo Note: Make sure PostgreSQL and Redis are running!
+echo NOTE: Make sure PostgreSQL and Redis are running!
 echo.
 echo To stop: Close the terminal windows or press Ctrl+C in each
 echo ==========================================
