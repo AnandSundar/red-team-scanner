@@ -14,8 +14,6 @@
 #   docker-compose -f docker-compose.yml up
 # =============================================================================
 
-version: '3.8'
-
 services:
   # ---------------------------------------------------------------------------
   # PostgreSQL - Development Overrides
@@ -37,19 +35,7 @@ services:
         max-file: "3"
     # Allow more connections in development
     command: >
-      postgres
-      -c max_connections=200
-      -c shared_buffers=256MB
-      -c effective_cache_size=768MB
-      -c maintenance_work_mem=64MB
-      -c checkpoint_completion_target=0.9
-      -c wal_buffers=16MB
-      -c default_statistics_target=100
-      -c random_page_cost=1.1
-      -c effective_io_concurrency=200
-      -c work_mem=6553kB
-      -c min_wal_size=1GB
-      -c max_wal_size=4GB
+      postgres -c max_connections=200 -c shared_buffers=256MB -c effective_cache_size=768MB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=6553kB -c min_wal_size=1GB -c max_wal_size=4GB
 
   # ---------------------------------------------------------------------------
   # Redis - Development Overrides
@@ -59,14 +45,7 @@ services:
       - "6379:6379"
     # Less aggressive persistence for faster development
     command: >
-      redis-server
-      --appendonly yes
-      --appendfsync everysec
-      --save 300 10
-      --save 60 10000
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
-      --loglevel notice
+      redis-server --appendonly yes --appendfsync everysec --save 300 10 --save 60 10000 --maxmemory 256mb --maxmemory-policy allkeys-lru --loglevel notice
     logging:
       driver: "json-file"
       options:
@@ -87,7 +66,7 @@ services:
     # Expose debug port for Delve
     ports:
       - "8080:8080"
-      - "40000:40000"  # Delve debugger
+      - "40000:40000" # Delve debugger
     environment:
       # Override for development debugging
       DEBUG: "true"
@@ -97,7 +76,7 @@ services:
     # Override command for hot reload (if using Air or similar)
     # command: ["air", "-c", ".air.toml"]
     # For now, use go run for simplicity
-    command: ["go", "run", "./cmd/server"]
+    command: [ "go", "run", "./cmd/server" ]
     # Development security - less strict
     security_opt:
       - "no-new-privileges:false"
@@ -110,7 +89,7 @@ services:
           memory: 256M
     # Health check with longer intervals for dev
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health" ]
       interval: 60s
       timeout: 10s
       retries: 3
@@ -129,21 +108,21 @@ services:
     # Mount source code for hot reload
     volumes:
       - ./frontend:/app:cached
-      - /app/node_modules  # Anonymous volume to preserve node_modules
-      - /app/.next         # Anonymous volume for build cache
+      - /app/node_modules # Anonymous volume to preserve node_modules
+      - /app/.next # Anonymous volume for build cache
     ports:
       - "3000:3000"
-      - "9230:9230"  # Node.js debugger
+      - "9230:9230" # Node.js debugger
     environment:
       - NODE_ENV=development
-      - WATCHPACK_POLLING=true  # Enable polling for file changes (useful in Docker)
-      - CHOKIDAR_USEPOLLING=true  # Chokidar file watching
+      - WATCHPACK_POLLING=true # Enable polling for file changes (useful in Docker)
+      - CHOKIDAR_USEPOLLING=true # Chokidar file watching
       - NEXT_TELEMETRY_DISABLED=1
       - NEXT_WEBPACK_POLLING=true
     # Ensure hot reload works
     stdin_open: true
     tty: true
-    command: ["npm", "run", "dev"]
+    command: [ "npm", "run", "dev" ]
     # Proxy API requests to backend service
     # This is handled by Next.js rewrites in next.config.js
     depends_on:
@@ -174,12 +153,11 @@ services:
       resources:
         limits:
           memory: 3G
-
   # ---------------------------------------------------------------------------
   # Development Tools (Optional)
   # ---------------------------------------------------------------------------
   # Uncomment to use additional development tools
-  
+
   # MailHog - Email testing
   # mailhog:
   #   image: mailhog/mailhog:latest
@@ -189,7 +167,7 @@ services:
   #     - "8025:8025"  # Web UI
   #   networks:
   #     - redteam-network
-  
+
   # Adminer - Database management UI
   # adminer:
   #   image: adminer:latest
@@ -202,7 +180,7 @@ services:
   #     - redteam-network
   #   depends_on:
   #     - postgres
-  
+
   # Redis Commander - Redis management UI
   # redis-commander:
   #   image: rediscommander/redis-commander:latest
@@ -216,7 +194,7 @@ services:
   #   depends_on:
   #     - redis
 
-# Additional volumes for development
+  # Additional volumes for development
 volumes:
   go_mod_cache:
     driver: local
