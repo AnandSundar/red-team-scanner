@@ -2,11 +2,14 @@
 
 import { useUser as useClerkUser } from "@clerk/nextjs";
 
+// Check if we're in development mode without valid Clerk keys
 const isDevelopment = process.env.NODE_ENV === "development";
-const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
-    !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.includes("your_clerk");
+const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const hasValidKey = publishableKey &&
+    !publishableKey.includes("your_clerk") &&
+    publishableKey.startsWith("pk_");
 
-const useMockAuth = isDevelopment && !hasClerkKey;
+export const useMockAuth = isDevelopment && !hasValidKey;
 
 // Mock user for development without Clerk
 const mockUser = {
@@ -30,5 +33,3 @@ export function useUser() {
     // Otherwise use Clerk
     return useClerkUser();
 }
-
-export { useMockAuth };
