@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser, UserButton, SignInButton } from "@/hooks/useAuth";
+import { useUser, useMockAuth } from "@/hooks/useAuth";
+import { UserButton, SignInButton } from "@clerk/nextjs";
+import { MockUserButton } from "@/components/MockUserButton";
 import { Shield, Menu, X, Zap, History, Settings, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 
@@ -83,28 +85,40 @@ export function Navbar() {
                                     <span className="hidden md:block text-sm text-gray-400">
                                         {user?.emailAddresses[0]?.emailAddress}
                                     </span>
-                                    <UserButton 
-                                        afterSignOutUrl="/"
-                                        appearance={{
-                                            elements: {
-                                                avatarBox: "w-9 h-9 ring-2 ring-neon-green/30 ring-offset-2 ring-offset-transparent rounded-full"
-                                            }
-                                        }}
-                                    />
+                                    {useMockAuth ? (
+                                        <MockUserButton />
+                                    ) : (
+                                        <UserButton 
+                                            afterSignOutUrl="/"
+                                            appearance={{
+                                                elements: {
+                                                    avatarBox: "w-9 h-9 ring-2 ring-neon-green/30 ring-offset-2 ring-offset-transparent rounded-full"
+                                                }
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             ) : (
                                 <div className="hidden md:flex items-center gap-3">
-                                    <SignInButton mode="modal">
-                                        <button className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors">
-                                            Sign In
-                                        </button>
-                                    </SignInButton>
-                                    <Link
-                                        href="/sign-up"
-                                        className="btn-primary text-sm"
-                                    >
-                                        Get Started
-                                    </Link>
+                                    {useMockAuth ? (
+                                        <Link href="/dashboard" className="btn-primary text-sm">
+                                            Get Started
+                                        </Link>
+                                    ) : (
+                                        <>
+                                            <SignInButton mode="modal">
+                                                <button className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors">
+                                                    Sign In
+                                                </button>
+                                            </SignInButton>
+                                            <Link
+                                                href="/sign-up"
+                                                className="btn-primary text-sm"
+                                            >
+                                                Get Started
+                                            </Link>
+                                        </>
+                                    )}
                                 </div>
                             )}
 

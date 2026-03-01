@@ -1,10 +1,12 @@
 "use client";
 
-import { useUser as useClerkUser, UserButton, SignInButton } from "@clerk/nextjs";
+import { useUser as useClerkUser } from "@clerk/nextjs";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
     !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.includes("your_clerk");
+
+const useMockAuth = isDevelopment && !hasClerkKey;
 
 // Mock user for development without Clerk
 const mockUser = {
@@ -17,7 +19,7 @@ const mockUser = {
 
 export function useUser() {
     // If in development without Clerk, return mock user
-    if (isDevelopment && !hasClerkKey) {
+    if (useMockAuth) {
         return {
             isSignedIn: true,
             isLoaded: true,
@@ -29,4 +31,4 @@ export function useUser() {
     return useClerkUser();
 }
 
-export { UserButton, SignInButton };
+export { useMockAuth };
