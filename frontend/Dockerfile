@@ -25,7 +25,7 @@ COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
 # Install dependencies based on lockfile
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f package-lock.json ]; then npm ci --legacy-peer-deps || npm install; \
   elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
   else npm i; \
   fi
@@ -63,7 +63,7 @@ COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
 # Install all dependencies (including devDependencies)
 RUN \
   if [ -f yarn.lock ]; then yarn install; \
-  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f package-lock.json ]; then npm ci --legacy-peer-deps || npm install; \
   elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i; \
   else npm install; \
   fi
