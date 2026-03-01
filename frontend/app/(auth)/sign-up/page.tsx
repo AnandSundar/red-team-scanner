@@ -1,7 +1,22 @@
 import { SignUp } from "@clerk/nextjs";
 import { Shield } from "lucide-react";
+import { redirect } from "next/navigation";
+
+// Check if we're in development mode without valid Clerk keys
+const isDevelopment = process.env.NODE_ENV === "development";
+const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const hasValidKey = publishableKey && 
+    !publishableKey.includes("your_clerk") && 
+    publishableKey.startsWith("pk_");
+
+const useMockAuth = isDevelopment && !hasValidKey;
 
 export default function SignUpPage() {
+    // In development without Clerk, redirect to dashboard
+    if (useMockAuth) {
+        redirect("/dashboard");
+    }
+
     return (
         <div className="min-h-screen flex items-center justify-center px-4 py-12">
             <div className="w-full max-w-md">
