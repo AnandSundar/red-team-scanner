@@ -119,7 +119,7 @@ services:
       - CHOKIDAR_USEPOLLING=true # Chokidar file watching
       - NEXT_TELEMETRY_DISABLED=1
       - NEXT_WEBPACK_POLLING=true
-      - NEXT_PUBLIC_API_URL=http://api:8080
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
     # Ensure hot reload works
     stdin_open: true
     tty: true
